@@ -149,6 +149,29 @@ const mocks = {
       return Promise.reject(error)
     }
     return Promise.resolve()
+  }),
+
+  // DynamoDB
+  createTableMock: jest.fn().mockReturnValue({
+    TableDescription: {
+      TableArn: 'arn:aws:dynamodb:region:XXXXX:table/create-table',
+      TableName: 'create-table',
+      TableStatus: 'CREATING'
+    }
+  }),
+  deleteTableMock: jest.fn().mockImplementation((params) => {
+    if (params.TableName === 'already-removed-table') {
+      const error = new Error()
+      error.code = 'ResourceNotFoundException'
+      return Promise.reject(error)
+    }
+    return Promise.resolve({
+      TableDescription: {
+        TableArn: 'arn:aws:dynamodb:region:XXXXX:table/delete-table',
+        TableName: 'delete-table',
+        TableStatus: 'DELETING'
+      }
+    })
   })
 }
 
@@ -296,6 +319,17 @@ const SNS = function() {
   }
 }
 
+const DynamoDB = function() {
+  return {
+    createTable: (obj) => ({
+      promise: () => mocks.createTableMock(obj)
+    }),
+    deleteTable: (obj) => ({
+      promise: () => mocks.deleteTableMock(obj)
+    })
+  }
+}
+
 export default {
   mocks,
   config: {
@@ -306,5 +340,6 @@ export default {
   IAM,
   Lambda,
   S3,
-  SNS
+  SNS,
+  DynamoDB
 }
