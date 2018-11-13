@@ -53,6 +53,20 @@ describe('Service', () => {
     expect(resolve(service.functions.hello.functionName)).toBe('hello')
   })
 
+  it('should construct component instances when construct is called', async () => {
+    const context = await createTestContext()
+    const Service = await context.loadType('Service')
+    const Component = await context.loadType('Component')
+
+    const service = await context.construct(Service, {
+      components: {
+        hello: {}
+      }
+    })
+
+    expect(service.components.hello).toBeInstanceOf(Component.class)
+  })
+
   it('should define functions as instances', async () => {
     const context = await createTestContext()
     const Service = await context.loadType('Service')
@@ -70,5 +84,30 @@ describe('Service', () => {
     expect(children).toMatchObject({
       hello: expect.any(Fn.class)
     })
+  })
+
+  it('should return the service info when info is called', async () => {
+    const context = await createTestContext()
+    const Service = await context.loadType('Service')
+
+    const service = await context.construct(Service, {
+      functions: {
+        hello: {
+          functionName: 'hello'
+        }
+      },
+      components: {
+        myComponent: {}
+      }
+    })
+
+    const info = await service.info()
+    expect(info.title).toEqual('Service')
+    expect(info.type).toEqual('Service')
+    expect(info.data).toEqual({})
+    const children = info.children.sort((first, second) => first.type.localeCompare(second.type))
+    expect(children).toHaveLength(2)
+    expect(children[0].type).toEqual('Component')
+    expect(children[1].type).toEqual('Function')
   })
 })

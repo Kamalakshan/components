@@ -28,10 +28,12 @@ const resolveCodePath = (code, root) => {
 
 const Service = async (SuperClass, superContext) => {
   const Fn = await superContext.loadType('Function')
+  const Component = await superContext.loadType('Component')
 
   return class extends SuperClass {
     async construct(inputs, context) {
       await super.construct(inputs, context)
+      // construct function instances
       this.functions = await map(
         async (func, alias) =>
           context.construct(Fn, {
@@ -40,6 +42,14 @@ const Service = async (SuperClass, superContext) => {
             code: resolvable(() => resolveCodePath(resolve(func.code), this.getType().root))
           }),
         or(this.functions, {})
+      )
+      // construct component instances
+      this.components = await map(
+        async (component) =>
+          context.construct(Component, {
+            ...component
+          }),
+        or(this.components, {})
       )
     }
 
